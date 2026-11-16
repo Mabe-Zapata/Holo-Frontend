@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pantalla fija de crisis (HU-15, RF-24).
 ///
