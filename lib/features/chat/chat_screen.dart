@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pantalla de conversación con el asistente (HU-05, RF-07).
 ///

@@ -6,7 +6,7 @@ Aplicación del proyecto Holo, desarrollada en Flutter. Este repositorio contien
 
 ## Requisitos
 
-- Flutter 3.19 o superior (Dart 3.3 o superior)
+- Flutter 3.50 o superior (Dart 3.14 o superior)
 - Android Studio con un emulador, o un teléfono Android en modo desarrollador
 - El backend en ejecución (ver el README del repositorio `Holo-project`)
 
