@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'core/rutas.dart';
+import 'core/tema.dart';
 import 'features/chat/chat_screen.dart';
 import 'features/consentimiento/consentimiento_screen.dart';
 import 'features/crisis/crisis_screen.dart';
@@ -15,10 +16,7 @@ class HoloApp extends StatelessWidget {
     return MaterialApp(
       title: 'Holo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF25706A)),
-        useMaterial3: true,
-      ),
+      theme: HoloTema.claro,
       initialRoute: Rutas.inicio,
       routes: {
         Rutas.inicio: (context) => const InicioScreen(),
