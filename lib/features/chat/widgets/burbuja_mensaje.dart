@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/tema.dart';
+
 /// El mensaje del usuario va a la derecha con el color principal del tema
 /// y el del asistente a la izquierda en gris.
 class BurbujaMensaje extends StatelessWidget {
@@ -24,7 +26,8 @@ class BurbujaMensaje extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: esUsuario ? colores.primary : colores.surfaceContainerHighest,
+          // El asistente usa el verde menta claro para distinguirse del fondo.
+          color: esUsuario ? colores.primary : HoloTema.superficieAlta,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Semantics(
