@@ -9,6 +9,14 @@ El presente documento explica cómo se comunica la aplicación con el backend. E
 - La URL del backend se define con `--dart-define=API_BASE_URL=...` (ver `lib/core/config.dart`).
 - Los errores del backend llegan como `ApiException`, con el código HTTP y el mensaje del campo `detail`.
 
+## Modo simulado
+
+Ejecuta `flutter run --dart-define=USAR_SIMULACION=true` para que
+`ApiClient` devuelva ejemplos sin conexión. El modo HTTP es el predeterminado.
+Para probar el caso de crisis, envía `[simular crisis]` como texto en
+`POST /chat`. La simulación usa datos fijos de demostración para el historial
+y el resumen y permite probar las pantallas sin persistir los envíos.
+
 ## Ejemplo de uso
 
 ```dart
