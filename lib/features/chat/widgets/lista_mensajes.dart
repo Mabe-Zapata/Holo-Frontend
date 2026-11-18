@@ -2,7 +2,7 @@ import 'package:holo_app/features/chat/widgets/burbuja_mensaje.dart';
 import 'package:holo_app/features/chat/widgets/mensaje.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Lista de la conversacion: el mensaje mas reciente queda abajo.
+/// Lista de la conversación: el mensaje más reciente queda abajo.
 class ListaMensajes extends StatelessWidget {
   const ListaMensajes({super.key, required this.mensajes});
 
@@ -12,11 +12,11 @@ class ListaMensajes extends StatelessWidget {
   Widget build(BuildContext context) {
     if (mensajes.isEmpty) {
       return const Center(
-        child: Text('Aun no hay mensajes. Cuentame como te sientes.'),
+        child: Text('Aún no hay mensajes. Cuéntame cómo te sientes.'),
       );
     }
     return ListView.builder(
-      // el ultimo mensaje queda abajo y visible
+      // el último mensaje queda abajo y visible
       reverse: true,
       itemCount: mensajes.length,
       itemBuilder: (context, i) {

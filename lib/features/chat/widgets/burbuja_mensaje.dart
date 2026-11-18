@@ -32,7 +32,7 @@ class BurbujaMensaje extends StatelessWidget {
           child: Text(
             texto,
             style: TextStyle(
-              fontSize: 16, // la guia de interfaz pide 14 como minimo
+              fontSize: 16, // la guía de interfaz pide 14 como mínimo
               color: esUsuario ? colores.onPrimary : colores.onSurface,
             ),
           ),

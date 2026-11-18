@@ -16,7 +16,7 @@ class IndicadorEscribiendo extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           SizedBox(width: 8),
-          Text('Holo esta escribiendo...'),
+          Text('Holo está escribiendo...'),
         ],
       ),
     );

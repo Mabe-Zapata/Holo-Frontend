@@ -6,7 +6,7 @@ import 'package:material_ui/material_ui.dart';
 Widget envolver(Widget hijo) => MaterialApp(home: Scaffold(body: hijo));
 
 void main() {
-  testWidgets('El mensaje mas reciente queda debajo del anterior', (
+  testWidgets('El mensaje más reciente queda debajo del anterior', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -30,6 +30,6 @@ void main() {
   ) async {
     await tester.pumpWidget(envolver(const ListaMensajes(mensajes: [])));
 
-    expect(find.textContaining('Aun no hay mensajes'), findsOneWidget);
+    expect(find.textContaining('Aún no hay mensajes'), findsOneWidget);
   });
 }

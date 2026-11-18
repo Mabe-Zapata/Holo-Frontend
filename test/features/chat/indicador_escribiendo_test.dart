@@ -9,7 +9,7 @@ void main() {
     // Solo pumpWidget: la animacion es infinita y pumpAndSettle se colgaria.
     await tester.pumpWidget(envolver(const IndicadorEscribiendo()));
 
-    expect(find.text('Holo esta escribiendo...'), findsOneWidget);
+    expect(find.text('Holo está escribiendo...'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

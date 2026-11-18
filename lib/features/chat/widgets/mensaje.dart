@@ -1,4 +1,4 @@
-/// Mensaje de la conversacion (FE-05).
+/// Mensaje de la conversación (FE-05).
 ///
 /// Los nombres coinciden con la respuesta de GET /chat/historial
 /// (odds/chat-historial.md del backend).
