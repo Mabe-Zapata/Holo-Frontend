@@ -16,6 +16,12 @@ class ApiException implements Exception {
   String toString() => 'ApiException($codigo): $mensaje';
 }
 
+/// Texto para la persona cuando una petición falla: el detalle del backend o
+/// un aviso de conexión, nunca un error técnico.
+String mensajeDeError(Object error) => error is ApiException
+    ? error.mensaje
+    : 'No hay conexión con Holo. Intenta de nuevo.';
+
 /// Único punto de comunicación con el backend.
 ///
 /// El contrato de cada endpoint está documentado en la carpeta `odds/` del
