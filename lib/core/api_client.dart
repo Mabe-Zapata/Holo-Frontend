@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'api_simulado.dart';
 import 'config.dart';
 
 /// Error devuelto por el backend, con su código HTTP y el campo `detail`.
@@ -19,10 +20,26 @@ class ApiException implements Exception {
 ///
 /// El contrato de cada endpoint está documentado en la carpeta `odds/` del
 /// repositorio del backend.
-class ApiClient {
-  ApiClient({required this.usuarioId, http.Client? cliente})
+abstract class ApiClient {
+  factory ApiClient({required String usuarioId, http.Client? cliente}) {
+    if (Config.usarSimulacion) {
+      return ApiSimulado(usuarioId: usuarioId);
+    }
+    return _ApiHttp(usuarioId: usuarioId, cliente: cliente);
+  }
+
+  String get usuarioId;
+
+  Future<dynamic> get(String ruta);
+
+  Future<dynamic> post(String ruta, [Map<String, dynamic>? cuerpo]);
+}
+
+class _ApiHttp implements ApiClient {
+  _ApiHttp({required this.usuarioId, http.Client? cliente})
       : _cliente = cliente ?? http.Client();
 
+  @override
   final String usuarioId;
   final http.Client _cliente;
 
@@ -33,11 +50,13 @@ class ApiClient {
 
   Uri _uri(String ruta) => Uri.parse('${Config.apiBaseUrl}$ruta');
 
+  @override
   Future<dynamic> get(String ruta) async {
     final respuesta = await _cliente.get(_uri(ruta), headers: _cabeceras);
     return _procesar(respuesta);
   }
 
+  @override
   Future<dynamic> post(String ruta, [Map<String, dynamic>? cuerpo]) async {
     final respuesta = await _cliente.post(
       _uri(ruta),
