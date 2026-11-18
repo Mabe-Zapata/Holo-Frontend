@@ -17,9 +17,10 @@ class HoloApp extends StatelessWidget {
       title: 'Holo',
       debugShowCheckedModeBanner: false,
       theme: HoloTema.claro,
-      initialRoute: Rutas.inicio,
+      // `home` en lugar de `initialRoute`: así la web abre la ruta de la URL
+      // (por ejemplo /#/crisis) en vez de volver siempre al inicio.
+      home: const InicioScreen(),
       routes: {
-        Rutas.inicio: (context) => const InicioScreen(),
         Rutas.consentimiento: (context) => const ConsentimientoScreen(),
         Rutas.chat: (context) => const ChatScreen(),
         Rutas.crisis: (context) => const CrisisScreen(),
