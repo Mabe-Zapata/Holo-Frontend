@@ -5,6 +5,7 @@ import '../../core/rutas.dart';
 import '../../core/sesion.dart';
 import '../../core/tema.dart';
 import '../crisis/crisis_screen.dart';
+import '../crisis/recursos_ayuda.dart';
 import 'widgets/indicador_escribiendo.dart';
 import 'widgets/lista_mensajes.dart';
 import 'widgets/mensaje.dart';
@@ -96,6 +97,20 @@ class _ChatEstado extends State<ChatScreen> {
     }
   }
 
+  void _mostrarRecursos(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (contexto) => const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: SingleChildScrollView(child: RecursosAyuda()),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
@@ -103,6 +118,11 @@ class _ChatEstado extends State<ChatScreen> {
       appBar: AppBar(
         title: const Text('Conversación'),
         actions: [
+          IconButton(
+            tooltip: 'Recursos de ayuda',
+            icon: const Icon(Icons.support_agent_outlined),
+            onPressed: () => _mostrarRecursos(context),
+          ),
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, Rutas.crisis),
             icon: const Icon(Icons.emergency_outlined),
