@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api_client.dart';
+import '../../core/cola_envios.dart';
 import '../../core/rutas.dart';
 import '../../core/sesion.dart';
 import '../../core/tema.dart';
@@ -10,48 +13,79 @@ import 'widgets/indicador_escribiendo.dart';
 import 'widgets/lista_mensajes.dart';
 import 'widgets/mensaje.dart';
 
-/// Pantalla de conversación con el asistente (HU-05, RF-07).
+/// Pantalla de conversación con el asistente (HU-05, RF-07, HU-16).
 ///
 /// Carga el historial con `GET /chat/historial` y envía con `POST /chat`.
+/// Cada mensaje lleva un identificador: si la conexión falla, queda en una cola
+/// local y se reenvía con el mismo identificador, sin duplicarse en el servidor.
 /// Si la respuesta es de crisis, abre la pantalla de crisis con sus datos.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.api});
+  const ChatScreen({
+    super.key,
+    this.api,
+    this.cola,
+    this.intervaloReintento = const Duration(seconds: 20),
+  });
 
   /// Permite inyectar el cliente en pruebas; por defecto usa la sesión activa.
   final ApiClient? api;
+
+  /// Cola de mensajes sin confirmar. En pruebas se inyecta una en memoria.
+  final ColaEnvios? cola;
+
+  /// Cada cuánto se intenta reenviar lo que quedó pendiente.
+  final Duration intervaloReintento;
 
   @override
   State<ChatScreen> createState() => _ChatEstado();
 }
 
+enum _Resultado { enviado, descartado, reintentar }
+
 class _ChatEstado extends State<ChatScreen> {
-  final List<Mensaje> _mensajes = [];
+  final List<Mensaje> _historial = [];
+  final List<EnvioPendiente> _pendientes = [];
   final TextEditingController _entrada = TextEditingController();
   late final ApiClient _api =
       widget.api ?? ApiClient(usuarioId: Sesion.usuarioId);
+  late final ColaEnvios _cola = widget.cola ?? ColaEnvios();
+  Timer? _reintento;
 
   bool _cargando = true;
-  bool _enviando = false;
-  String? _error;
+  bool _procesando = false;
+  bool _ofrecerRecursos = false;
+  String? _aviso;
 
   @override
   void initState() {
     super.initState();
-    _cargarHistorial();
+    _iniciar();
+    _reintento = Timer.periodic(widget.intervaloReintento, (_) => _procesarCola());
   }
 
   @override
   void dispose() {
+    _reintento?.cancel();
     _entrada.dispose();
     super.dispose();
   }
 
-  Future<void> _cargarHistorial() async {
+  Future<void> _iniciar() async {
+    await _recargarHistorial(alTerminarCarga: true);
+    final pendientes = await _cola.pendientes();
+    if (!mounted) return;
+    setState(() => _pendientes
+      ..clear()
+      ..addAll(pendientes));
+    await _procesarCola();
+  }
+
+  Future<void> _recargarHistorial({bool alTerminarCarga = false}) async {
     try {
       final datos = await _api.get('/chat/historial') as List<dynamic>;
       if (!mounted) return;
       setState(() {
-        _mensajes
+        _historial
           ..clear()
           ..addAll(datos.map((m) {
             final mapa = m as Map<String, dynamic>;
@@ -60,41 +94,86 @@ class _ChatEstado extends State<ChatScreen> {
           }));
       });
     } catch (e) {
-      if (mounted) setState(() => _error = mensajeDeError(e));
+      if (mounted) setState(() => _aviso = mensajeDeError(e));
     } finally {
-      if (mounted) setState(() => _cargando = false);
+      if (mounted && alTerminarCarga) setState(() => _cargando = false);
     }
   }
 
   Future<void> _enviar() async {
     final texto = _entrada.text.trim();
-    if (texto.isEmpty || _enviando) return;
+    if (texto.isEmpty) return;
+    final envio = EnvioPendiente(id: generarIdEvento(), texto: texto);
     setState(() {
-      _mensajes.add(Mensaje(autor: 'usuario', texto: texto));
+      _pendientes.add(envio);
       _entrada.clear();
-      _enviando = true;
-      _error = null;
+      _aviso = null;
     });
+    await _cola.encolar(envio);
+    await _procesarCola();
+  }
+
+  /// Envía los pendientes en orden. Se detiene al primer fallo de conexión para
+  /// no reordenar la conversación. Un proceso a la vez.
+  Future<void> _procesarCola() async {
+    if (_procesando || _pendientes.isEmpty) return;
+    setState(() => _procesando = true);
     try {
-      final respuesta =
-          await _api.post('/chat', {'texto': texto}) as Map<String, dynamic>;
-      if (!mounted) return;
+      for (final envio in List.of(_pendientes)) {
+        if (!mounted) return;
+        final resultado = await _enviarUno(envio);
+        if (resultado == _Resultado.reintentar) break;
+      }
+    } finally {
+      if (mounted) setState(() => _procesando = false);
+    }
+  }
+
+  Future<_Resultado> _enviarUno(EnvioPendiente envio) async {
+    try {
+      final respuesta = await _api.post('/chat', {
+        'texto': envio.texto,
+        'id_evento': envio.id,
+      }) as Map<String, dynamic>;
+      await _quitar(envio.id);
+      if (!mounted) return _Resultado.enviado;
+      await _recargarHistorial();
+      if (!mounted) return _Resultado.enviado;
       if (respuesta['tipo'] == 'crisis') {
         Navigator.pushNamed(
           context,
           Rutas.crisis,
           arguments: DatosCrisis.desde(respuesta),
         );
-      } else {
-        setState(() => _mensajes.add(
-              Mensaje(autor: 'asistente', texto: respuesta['texto'] as String),
-            ));
       }
-    } catch (e) {
-      if (mounted) setState(() => _error = mensajeDeError(e));
-    } finally {
-      if (mounted) setState(() => _enviando = false);
+      return _Resultado.enviado;
+    } on ApiException catch (e) {
+      // Errores del contenido o de la cuenta: reenviar no los arregla.
+      if (e.codigo == 401 || e.codigo == 403 || e.codigo == 422) {
+        await _quitar(envio.id);
+        if (mounted) setState(() => _aviso = e.mensaje);
+        return _Resultado.descartado;
+      }
+      _avisarFallo('No se pudo enviar. Lo reintentamos.');
+      return _Resultado.reintentar;
+    } catch (_) {
+      _avisarFallo('Sin conexión. Lo reintentamos.');
+      return _Resultado.reintentar;
     }
+  }
+
+  Future<void> _quitar(String id) async {
+    await _cola.quitar(id);
+    if (!mounted) return;
+    setState(() => _pendientes.removeWhere((e) => e.id == id));
+  }
+
+  void _avisarFallo(String aviso) {
+    if (!mounted) return;
+    setState(() {
+      _aviso = aviso;
+      _ofrecerRecursos = true;
+    });
   }
 
   void _mostrarRecursos(BuildContext context) {
@@ -114,6 +193,10 @@ class _ChatEstado extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final visibles = [
+      ..._historial,
+      ..._pendientes.map((e) => Mensaje(autor: 'usuario', texto: e.texto)),
+    ];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Conversación'),
@@ -157,16 +240,27 @@ class _ChatEstado extends State<ChatScreen> {
           Expanded(
             child: _cargando
                 ? const Center(child: Text('Cargando la conversación…'))
-                : ListaMensajes(mensajes: _mensajes),
+                : ListaMensajes(mensajes: visibles),
           ),
-          if (_enviando) const IndicadorEscribiendo(),
-          if (_error != null)
+          if (_procesando) const IndicadorEscribiendo(),
+          if (_aviso != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Text(
-                _error!,
-                style: tema.textTheme.bodySmall
-                    ?.copyWith(color: tema.colorScheme.error),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _aviso!,
+                      style: tema.textTheme.bodySmall
+                          ?.copyWith(color: tema.colorScheme.error),
+                    ),
+                  ),
+                  if (_ofrecerRecursos)
+                    TextButton(
+                      onPressed: () => _mostrarRecursos(context),
+                      child: const Text('Ver recursos de ayuda'),
+                    ),
+                ],
               ),
             ),
           SafeArea(
@@ -197,7 +291,7 @@ class _ChatEstado extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
-                    onPressed: _enviando ? null : _enviar,
+                    onPressed: _enviar,
                     tooltip: 'Enviar mensaje',
                     icon: const Icon(Icons.send_rounded),
                     style: IconButton.styleFrom(
