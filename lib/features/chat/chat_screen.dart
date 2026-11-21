@@ -60,7 +60,8 @@ class _ChatEstado extends State<ChatScreen> {
   void initState() {
     super.initState();
     _iniciar();
-    _reintento = Timer.periodic(widget.intervaloReintento, (_) => _procesarCola());
+    _reintento =
+        Timer.periodic(widget.intervaloReintento, (_) => _procesarCola());
   }
 
   @override

@@ -41,7 +41,12 @@ class ApiFalsa implements ApiClient {
     final datos = cuerpo!;
     envios.add(Map<String, dynamic>.of(datos));
     final respuesta = await alEnviar(datos);
-    _historial.add({'autor': 'usuario', 'texto': datos['texto'], 'fecha': '', 'tipo': 'mensaje'});
+    _historial.add({
+      'autor': 'usuario',
+      'texto': datos['texto'],
+      'fecha': '',
+      'tipo': 'mensaje'
+    });
     _historial.add({
       'autor': 'asistente',
       'texto': respuesta['texto'],
@@ -52,8 +57,11 @@ class ApiFalsa implements ApiClient {
   }
 }
 
-Map<String, dynamic> respuestaEco(Map<String, dynamic> cuerpo) =>
-    {'tipo': 'respuesta', 'texto': '[eco] ${cuerpo['texto']}', 'riesgo': 'sin_riesgo'};
+Map<String, dynamic> respuestaEco(Map<String, dynamic> cuerpo) => {
+      'tipo': 'respuesta',
+      'texto': '[eco] ${cuerpo['texto']}',
+      'riesgo': 'sin_riesgo'
+    };
 
 Widget envolver(Widget hijo) => MaterialApp(
       theme: HoloTema.claro,
@@ -62,15 +70,18 @@ Widget envolver(Widget hijo) => MaterialApp(
     );
 
 /// Desmonta la pantalla para que su temporizador se cancele al terminar la prueba.
-Future<void> desmontar(WidgetTester tester) => tester.pumpWidget(const SizedBox());
+Future<void> desmontar(WidgetTester tester) =>
+    tester.pumpWidget(const SizedBox());
 
 void main() {
   group('ColaEnvios', () {
     test('conserva el orden de llegada y permite quitar un envío', () async {
       final cola = ColaEnvios(almacen: AlmacenMemoria());
 
-      await cola.encolar(const EnvioPendiente(id: 'uno-aaaa', texto: 'primero'));
-      await cola.encolar(const EnvioPendiente(id: 'dos-bbbb', texto: 'segundo'));
+      await cola
+          .encolar(const EnvioPendiente(id: 'uno-aaaa', texto: 'primero'));
+      await cola
+          .encolar(const EnvioPendiente(id: 'dos-bbbb', texto: 'segundo'));
       await cola.quitar('uno-aaaa');
 
       final pendientes = await cola.pendientes();
@@ -82,7 +93,8 @@ void main() {
 
       await Future.wait([
         for (var n = 0; n < 20; n++)
-          cola.encolar(EnvioPendiente(id: 'par-${n.toString().padLeft(3, '0')}', texto: 'x$n')),
+          cola.encolar(EnvioPendiente(
+              id: 'par-${n.toString().padLeft(3, '0')}', texto: 'x$n')),
       ]);
 
       expect((await cola.pendientes()).length, 20);
@@ -118,7 +130,8 @@ void main() {
 
       expect(find.text('[eco] hola'), findsOneWidget);
       expect(await cola.pendientes(), isEmpty);
-      expect(api.envios.single['id_evento'], matches(RegExp(r'^[A-Za-z0-9_-]{8,64}$')));
+      expect(api.envios.single['id_evento'],
+          matches(RegExp(r'^[A-Za-z0-9_-]{8,64}$')));
       await desmontar(tester);
     });
 
@@ -172,7 +185,8 @@ void main() {
     testWidgets('un error de contenido descarta el envío y muestra el motivo',
         (tester) async {
       final api = ApiFalsa(
-        alEnviar: (_) async => throw ApiException(422, 'El mensaje no puede estar vacío.'),
+        alEnviar: (_) async =>
+            throw ApiException(422, 'El mensaje no puede estar vacío.'),
       );
       final cola = ColaEnvios(almacen: AlmacenMemoria());
       await tester.pumpWidget(envolver(ChatScreen(api: api, cola: cola)));
@@ -220,7 +234,8 @@ void main() {
 
       // Cada intento reenvía desde el primero: el segundo nunca sale antes que él.
       expect(api.envios.map((e) => e['texto']).toSet(), {'primero'});
-      expect((await cola.pendientes()).map((e) => e.texto), ['primero', 'segundo']);
+      expect((await cola.pendientes()).map((e) => e.texto),
+          ['primero', 'segundo']);
       await desmontar(tester);
     });
 
@@ -242,19 +257,25 @@ void main() {
       await desmontar(tester);
     });
 
-    testWidgets('una crisis confirmada abre la pantalla de crisis', (tester) async {
+    testWidgets('una crisis confirmada abre la pantalla de crisis',
+        (tester) async {
       final api = ApiFalsa(
         alEnviar: (_) async => {
           'tipo': 'crisis',
           'texto': 'Texto de crisis de prueba',
           'riesgo': 'alto',
           'recursos': [
-            {'nombre': 'ECU 911', 'telefono': '911', 'descripcion': 'Emergencias'},
+            {
+              'nombre': 'ECU 911',
+              'telefono': '911',
+              'descripcion': 'Emergencias'
+            },
           ],
         },
       );
       await tester.pumpWidget(
-        envolver(ChatScreen(api: api, cola: ColaEnvios(almacen: AlmacenMemoria()))),
+        envolver(
+            ChatScreen(api: api, cola: ColaEnvios(almacen: AlmacenMemoria()))),
       );
       await tester.pumpAndSettle();
 

@@ -52,7 +52,8 @@ class AlmacenEnviosPreferencias implements AlmacenEnvios {
 
 /// Mensajes enviados desde la conversación que todavía no tienen confirmación.
 class ColaEnvios {
-  ColaEnvios({AlmacenEnvios? almacen}) : _almacen = almacen ?? AlmacenEnviosPreferencias();
+  ColaEnvios({AlmacenEnvios? almacen})
+      : _almacen = almacen ?? AlmacenEnviosPreferencias();
 
   final AlmacenEnvios _almacen;
   // Cada cambio espera al anterior: evita que dos escrituras se pisen.
