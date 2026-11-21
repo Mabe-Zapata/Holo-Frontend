@@ -17,7 +17,8 @@ class ApiResumenFalsa implements ApiClient {
   Future<dynamic> get(String ruta) async => throw UnimplementedError();
 
   @override
-  Future<dynamic> post(String ruta, [Map<String, dynamic>? cuerpo]) async => _respuesta;
+  Future<dynamic> post(String ruta, [Map<String, dynamic>? cuerpo]) async =>
+      _respuesta;
 }
 
 Widget envolver(Widget hijo) => MaterialApp(
@@ -43,7 +44,8 @@ void main() {
     expect(find.text('Generado por IA'), findsNothing);
   });
 
-  testWidgets('muestra cada hecho con su día y la etiqueta de IA', (tester) async {
+  testWidgets('muestra cada hecho con su día y la etiqueta de IA',
+      (tester) async {
     final api = ApiResumenFalsa(resumenDeEjemplo());
     final resumen = await api.post('/resumen') as Map<String, dynamic>;
 
@@ -56,16 +58,19 @@ void main() {
     expect(find.text('Dijo que el martes fue mejor.'), findsOneWidget);
   });
 
-  testWidgets('un resumen sin hechos lo dice sin inventar contenido', (tester) async {
+  testWidgets('un resumen sin hechos lo dice sin inventar contenido',
+      (tester) async {
     final vacio = {...resumenDeEjemplo(), 'hechos': <Map<String, dynamic>>[]};
 
     await tester.pumpWidget(envolver(TarjetaResumen(resumen: vacio)));
 
-    expect(find.text('No hay hechos destacados en la última semana.'), findsOneWidget);
+    expect(find.text('No hay hechos destacados en la última semana.'),
+        findsOneWidget);
     expect(find.text('Generado por IA'), findsOneWidget);
   });
 
-  testWidgets('sin la marca de IA no se etiqueta como generado por IA', (tester) async {
+  testWidgets('sin la marca de IA no se etiqueta como generado por IA',
+      (tester) async {
     final sinMarca = {...resumenDeEjemplo(), 'generado_por_ia': false};
 
     await tester.pumpWidget(envolver(TarjetaResumen(resumen: sinMarca)));
