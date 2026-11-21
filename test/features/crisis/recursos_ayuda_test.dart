@@ -7,8 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 Widget envolver(Widget hijo) => MaterialApp(theme: HoloTema.claro, home: hijo);
 
-const aviso911 =
-    'No se pudo abrir el marcador. Marca 911 desde tu teléfono.';
+const aviso911 = 'No se pudo abrir el marcador. Marca 911 desde tu teléfono.';
 
 void main() {
   testWidgets('muestra ECU 911 y la línea 171, opción 6', (tester) async {
