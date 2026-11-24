@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/tema.dart';
+import 'recursos_ayuda.dart';
 
 /// Un recurso de ayuda tal como lo devuelve `POST /chat` (campo `recursos`).
 class RecursoAyuda {
@@ -59,7 +59,8 @@ class DatosCrisis {
 /// Pantalla de crisis (HU-15, RF-24).
 ///
 /// Recibe los datos como argumento de la ruta. Sin argumento (botón SOS) usa
-/// los de respaldo. No ofrece técnicas ni sugerencias.
+/// los de respaldo. Los recursos usan RecursosAyuda (FE-07) para poder llamar.
+/// No ofrece técnicas, sugerencias ni campo de escritura.
 class CrisisScreen extends StatelessWidget {
   const CrisisScreen({super.key});
 
@@ -86,59 +87,12 @@ class CrisisScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          for (final recurso in datos.recursos)
-            _TarjetaRecurso(recurso: recurso),
+          RecursosAyuda(recursos: datos.recursos),
           const SizedBox(height: 8),
           Text(
             'Si estás en un lugar seguro, pide a alguien de confianza que te acompañe.',
             style: tema.textTheme.bodySmall,
             textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TarjetaRecurso extends StatelessWidget {
-  const _TarjetaRecurso({required this.recurso});
-
-  final RecursoAyuda recurso;
-
-  Future<void> _copiar(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: recurso.telefono));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Número copiado')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tema.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(recurso.nombre, style: tema.textTheme.titleMedium),
-          Text(recurso.descripcion, style: tema.textTheme.bodySmall),
-          const SizedBox(height: 8),
-          SelectableText(
-            recurso.telefono,
-            style: tema.textTheme.titleLarge?.copyWith(color: HoloTema.marca),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => _copiar(context),
-            icon: const Icon(Icons.copy_outlined),
-            label: const Text('Copiar número'),
           ),
         ],
       ),
